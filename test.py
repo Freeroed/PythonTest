@@ -1,4 +1,6 @@
 ﻿import pygame
+import random
+pygame.init()
 # Переменная отвечающая за счётчик FPS
 clock = pygame.time.Clock()
 # Переменная, отвечающая за запуск игры
@@ -26,7 +28,12 @@ bot_rect_x = win_W-rect_W
 bot_rect_y = 0
 bot_speed = 5
 
+#Настройка шрифта вывода счёта
+score_font = pygame.font.Font(None, 72)
 
+#Счёт игроков
+player_score = 0
+bot_score = 0 
 
 # Основной цикл игры
 while Run:
@@ -35,6 +42,14 @@ while Run:
     # Заливка фона определённым цветом.
     # Цвет указывается в модели RGB(R,G,B), где насыщенность цвета указватся в пределах 0-255
     window.fill((255,255,255))
+    
+    #Свойства вывода текста
+    p_score = score_font.render(str(player_score), 1, (0,0,255))
+    b_score = score_font.render(str(bot_score), 1, (0,0,255))
+    #Отрисвка счёта
+    window.blit(b_score, (int(win_W/2-100),30))
+    window.blit(p_score, (int(win_W/2+100),30))
+    
     # Получение массива всех нажатых клавиш
     keys=pygame.key.get_pressed()
     #Основной цикл обработки игровых событий
@@ -55,9 +70,9 @@ while Run:
         rect_y-=player_speed
     
     #Движения бота за шариком
-    if (bot_rect_y+(rect_H/2) < ball_y and bot_rect_y + rect_H <= win_H):
+    if (bot_rect_y+(rect_H/2) < ball_y and bot_rect_y + rect_H <= win_H) and ball_x>= win_W/2:
         bot_rect_y+=bot_speed
-    if (bot_rect_y+(rect_H/2) > ball_y and bot_rect_y >= 0):
+    if (bot_rect_y+(rect_H/2) > ball_y and bot_rect_y >= 0)and ball_x>= win_W/2:
         bot_rect_y-=bot_speed
     # Отрисовка круга pygame.draw.circle(Окно, на котором надо отрисовать, (цвет), (Координаты центра), радиус)
     pygame.draw.circle(window,(255,150,0),(ball_x,ball_y),ball_R)
@@ -74,17 +89,31 @@ while Run:
     if (ball_x-ball_R <= rect_W):
         if ball_y >= rect_y and ball_y <= rect_y+rect_H:
             speed_x*=-1
-
+            speed_x=int(speed_x * 1.15)
     if (ball_x + ball_R >= win_W- rect_W):
         if ball_y >= bot_rect_y and ball_y <= bot_rect_y+rect_H:
             speed_x*=-1
-    
+            speed_x=int(speed_x * 1.15)
 
     #Отскок шарика от вертикальных и горизонтальных границ
     if ball_x + ball_R >= win_W or ball_x - ball_R <= 0:
-        speed_x*= -1
+        if ball_x + ball_R >= win_W:
+            bot_score += 1
+        if ball_x - ball_R <= 0:
+            player_score += 1
+            
+        ball_x=int(win_W/2)
+        ball_y=int(win_H/2)
+        speed_x = random.randint(-15,15)
+        speed_y = random.randint(-6, 6)
+        while (speed_x <= 4 and speed_x >= -4):
+            speed_x = random.randint(-15,15)
+        while (speed_y <= 3 and speed_y >= -3):
+            speed_y = random.randint(-15,15)
+           
     if ball_y + ball_R >= win_H or ball_y - ball_R <= 0:
         speed_y*= -1
+    
     
     # Обновление окна приложения. Выполняется в конце цикла
     pygame.display.update()
