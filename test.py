@@ -1,5 +1,59 @@
 ﻿import pygame
 import random
+import sys
+
+
+class Menu():
+    def __init__(self, screen, color):
+        self.screen = screen
+        self.color = color
+
+    def menu(self):
+        menu_font = pygame.font.Font(None, 72)
+        run = True
+        while run:
+            self.screen.fill(self.color)
+            start_button = menu_font.render("Начать", 1, (0,0,255))
+
+            mousePosition = pygame.mouse.get_pos()
+ 
+            self.screen.blit(start_button, (int(win_W/2)-80,int(win_H/2)-40))
+            for e in pygame.event.get():
+                if e.type == pygame.QUIT:
+                    sys.exit()
+                if e.type == pygame.KEYDOWN:
+                    if e.key ==pygame.K_ESCAPE:
+                        sys.exit()
+                    if e.key == pygame.K_SPACE:
+                        run = False
+                if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 :
+                    if (mousePosition[0] > win_W/2-80 and mousePosition[0] < win_W/2+80 and mousePosition[1] > win_H/2-40 and mousePosition[1] < win_H/2+40):
+                        run = False
+            pygame.display.flip()
+
+#Создание класса ракетки
+class Pand():
+    #Конструктор
+    def __init__(self, x, y, width, heitht, color, speed):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.heitht = heitht
+        self.color = color
+        self.speed = speed
+
+    #Отрисовка
+    def print(self, window):
+        pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.heitht))
+        #self.count_position()
+
+    #Рассчёт позиции
+    def count_position(self, upOfDown, win_h):
+        if(upOfDown == 'up' and self.y > 0):
+            self.y -=self.speed
+        if(upOfDown == 'down' and self.y + self.heitht < win_h):
+            self.y +=self.speed
+        
 
 #Создание класса Шарика
 class Ball:
@@ -76,6 +130,14 @@ bot_score = 0
 #Создание шарика
 game_ball = Ball(int(win_W/2), int(win_H/2), 30, 15, 3, (255,0,0))
 game_ball.spawn(int(win_W/2), int(win_H/2))
+
+#Создание ракетки игрока
+player_pand = Pand(rect_x, rect_y , rect_W, rect_H, (255,0,0), player_speed)
+
+#Создаём объект меню
+menu = Menu(window, (252, 15, 192))
+menu.menu()
+
 # Основной цикл игры
 while Run:
     # Настройка FPS
@@ -104,11 +166,13 @@ while Run:
             # Проверка того, какая клавиша нажата
             if i.key == pygame.K_f:
                 speed_y+= 3
+            if i.key == pygame.K_ESCAPE:
+                menu.menu()
     #Обработка нажатия клавиш. Сравнение значения элемента массива с названием клавиши и выполнение соответствующего действия
-    if keys[pygame.K_DOWN] and not(rect_y+rect_H >= win_H):
-        rect_y+=player_speed
-    if keys[pygame.K_UP] and not(rect_y <= 0):
-        rect_y-=player_speed
+    if keys[pygame.K_DOWN] :
+        player_pand.count_position('down', win_H)
+    if keys[pygame.K_UP] :
+        player_pand.count_position('up', win_H)
     
     #Движения бота за шариком
     if (bot_rect_y+(rect_H/2) < game_ball.y and bot_rect_y + rect_H <= win_H) and game_ball.x>= win_W/2:
@@ -117,7 +181,8 @@ while Run:
         bot_rect_y-=bot_speed
 
     #Отрисока прямоугоника (Окно, (Цвет), (коорддинаты левого верхнего угла, ширины и высота))
-    pygame.draw.rect(window,(210,40,0),(rect_x,rect_y,rect_W,rect_H))
+    #pygame.draw.rect(window,(210,40,0),(rect_x,rect_y,rect_W,rect_H))
+    player_pand.print(window)
     # Изменение положения шарика. К текущему положению прибавляется скорость по двум осям
     pygame.draw.rect(window,(210,40,0), (bot_rect_x,bot_rect_y, rect_W, rect_H))
     game_ball.print(window)
@@ -126,7 +191,7 @@ while Run:
 
     #Проверка столкновения шарика с ракетками игрока и бота
     if (game_ball.x-game_ball.radius <= rect_W):
-        if game_ball.y >= rect_y and game_ball.y <= rect_y+rect_H:
+        if game_ball.y >= player_pand.y and game_ball.y <= player_pand.y+player_pand.heitht:
             game_ball.speed_x*=-1
             game_ball.speed_x=int(game_ball.speed_x * 1.15)
     if (game_ball.x + ball_R >= win_W- rect_W):
