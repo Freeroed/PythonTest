@@ -1,23 +1,46 @@
 ﻿import pygame
 import random
 import sys
+from os import path
 
+#Описание класса кнопки меню
+class Button():
+    def __init__(self, x,y,font, name, font_color, width, heigth):
+        self.x = x
+        self.y = y
+        self.font = font
+        self.name = name
+        self.font_color = font_color
+        self.width = width
+        self.heigth = heigth
+        self.button = font.render(name, 1, font_color)
+
+    def render(self, window):
+        window.blit(self.button, (self.x, self.y))
+
+    def check(self, mouse_x, mouse_y):
+        print("")
+        #TODO Дописать проверку попадания в зону кнопки
 
 class Menu():
-    def __init__(self, screen, color):
+    def __init__(self, screen, color, buttons):
         self.screen = screen
         self.color = color
+        self.buttons = buttons
 
     def menu(self):
-        menu_font = pygame.font.Font(None, 72)
+        #menu_font = pygame.font.Font(None, 72)
         run = True
         while run:
             self.screen.fill(self.color)
-            start_button = menu_font.render("Начать", 1, (0,0,255))
+            #start_button = menu_font.render("Начать", 1, (0,0,255))
 
             mousePosition = pygame.mouse.get_pos()
- 
-            self.screen.blit(start_button, (int(win_W/2)-80,int(win_H/2)-40))
+            for but in self.buttons:
+                but.render(self.screen)
+                
+
+            #self.screen.blit(start_button, (int(win_W/2)-80,int(win_H/2)-40))
             for e in pygame.event.get():
                 if e.type == pygame.QUIT:
                     sys.exit()
@@ -27,6 +50,11 @@ class Menu():
                     if e.key == pygame.K_SPACE:
                         run = False
                 if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 :
+                    for but in self.buttons:
+                        #TODO Дописать проверку нажатия на кнопку
+                        but.check(mousePosition[0], mousePosition)
+
+
                     if (mousePosition[0] > win_W/2-80 and mousePosition[0] < win_W/2+80 and mousePosition[1] > win_H/2-40 and mousePosition[1] < win_H/2+40):
                         run = False
             pygame.display.flip()
@@ -134,8 +162,16 @@ game_ball.spawn(int(win_W/2), int(win_H/2))
 #Создание ракетки игрока
 player_pand = Pand(rect_x, rect_y , rect_W, rect_H, (255,0,0), player_speed)
 
+#Настройка расположения музыки
+sound_dir = path.join(path.dirname(__file__), 'sound')
+jump_sound = pygame.mixer.Sound(path.join(sound_dir, 'Ball_jump.wav'))
+
 #Создаём объект меню
-menu = Menu(window, (252, 15, 192))
+menu_font = pygame.font.Font(None, 72)
+start_button = Button(int(win_W/2)-80,int(win_H/2)-40, menu_font, 'Start', (0,0,255), 80, 40 )
+#TODO Реализовать кнопку выхода из игры
+buttons = [start_button]
+menu = Menu(window, (252, 15, 192), buttons)
 menu.menu()
 
 # Основной цикл игры
@@ -194,23 +230,26 @@ while Run:
         if game_ball.y >= player_pand.y and game_ball.y <= player_pand.y+player_pand.heitht:
             game_ball.speed_x*=-1
             game_ball.speed_x=int(game_ball.speed_x * 1.15)
+            jump_sound.play()
     if (game_ball.x + ball_R >= win_W- rect_W):
         if game_ball.y >= bot_rect_y and game_ball.y <= bot_rect_y+rect_H:
             game_ball.speed_x*=-1
             game_ball.speed_x=int(game_ball.speed_x * 1.15)
+            jump_sound.play()
 
-    #Отскок шарика от вертикальных и горизонтальных границ
+    #Проверка забития голов
     if game_ball.x + game_ball.radius >= win_W or game_ball.x - game_ball.radius <= 0:
         if game_ball.x + game_ball.radius >= win_W:
-            bot_score += 1
+            jump_sound.play()
         if game_ball.x - game_ball.radius <= 0:
             player_score += 1
-
-        #БУДЕМ СПАВНИТЬ    
+ 
         game_ball.spawn(int(win_W/2), int(win_H/2))
-           
+
+    #Отскок шарика от вертикальных и горизонтальных границ       
     if game_ball.y + game_ball.radius >= win_H or game_ball.y - game_ball.radius <= 0:
         game_ball.speed_y*= -1
+        jump_sound.play()
     
     
     # Обновление окна приложения. Выполняется в конце цикла
